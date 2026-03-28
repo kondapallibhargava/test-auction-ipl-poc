@@ -1,26 +1,28 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ipl-blue: #0c2d5e;
+  --color-ipl-orange: #f7941d;
+  --color-ipl-dark: #060d1a;
+  --color-ipl-card: #0d1f38;
+  --color-ipl-accent: #e85d00;
+  --color-ipl-green: #00C851;
+  --color-ipl-red: #ff4444;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #060d1a;
+  --foreground: #e8f0f8;
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(160deg, #0f2a4a 0%, #0a1830 35%, #060d1a 70%);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
 }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #060d1a; }
+::-webkit-scrollbar-thumb { background: #0c2d5e; border-radius: 3px; }
