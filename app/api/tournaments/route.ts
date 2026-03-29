@@ -5,8 +5,8 @@ import { createTournament, listTournaments, serializeTournament } from '@/lib/st
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const tournaments = listTournaments().map(serializeTournament);
-  return NextResponse.json(tournaments);
+  const tournaments = await listTournaments();
+  return NextResponse.json(tournaments.map(serializeTournament));
 }
 
 export async function POST(req: NextRequest) {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'teamBudget must be 50–1000 million' }, { status: 400 });
     }
 
-    const tournament = createTournament(session.userId, name.trim(), budget, teams);
+    const tournament = await createTournament(session.userId, name.trim(), budget, teams);
     return NextResponse.json(serializeTournament(tournament), { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create tournament';

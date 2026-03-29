@@ -1,0 +1,170 @@
+[
+  {
+    "name": "Ajinkya Rahane",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Rinku Singh",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Finn Allen",
+    "role": "Batsman",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Tejasvi Dahiya",
+    "role": "Wicket-Keeper",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Manish Pandey",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Rovman Powell",
+    "role": "Batsman",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Angkrish Raghuvanshi",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Ramandeep Singh",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Sarthak Ranjan",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Tim Seifert",
+    "role": "Wicket-Keeper",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Rahul Tripathi",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Daksh Kamra",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Cameron Green",
+    "role": "All-Rounder",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Sunil Narine",
+    "role": "All-Rounder",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Rachin Ravindra",
+    "role": "All-Rounder",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Anukul Roy",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Vaibhav Arora",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Saurabh Dubey",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Kartik Tyagi",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Blessing Muzarabani",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Matheesha Pathirana",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Navdeep Saini",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Prashant Solanki",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Umran Malik",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Varun Chakravarthy",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Akash Deep",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Harshit Rana",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Mustafizur Rahman",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  }
+]

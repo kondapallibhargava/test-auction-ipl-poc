@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import TournamentCard from '@/components/dashboard/TournamentCard';
 import CreateTournamentForm from '@/components/dashboard/CreateTournamentForm';
 import JoinTournamentForm from '@/components/dashboard/JoinTournamentForm';
+import { Team } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,10 +16,10 @@ export default async function DashboardPage() {
   const session = getSession(cookieStore.get('ipl-session')?.value);
   if (!session) redirect('/');
 
-  const user = getUserById(session.userId);
+  const user = await getUserById(session.userId);
   if (!user) redirect('/');
 
-  const allTournaments = listTournaments().map(serializeTournament);
+  const allTournaments = (await listTournaments()).map(serializeTournament);
   const activeTournament = user.activeTournamentCode
     ? allTournaments.find(t => t.code === user.activeTournamentCode)
     : null;
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
     t => t.status === 'lobby' && t.code !== user.activeTournamentCode
   );
   const myTournaments = allTournaments.filter(t =>
-    Object.values(t.teams as Record<string, { userId: string }>).some(team => team.userId === session.userId)
+    Object.values(t.teams as Record<string, Team>).some(team => team.userId === session.userId)
   );
 
   return (
@@ -45,7 +46,7 @@ export default async function DashboardPage() {
           >
             <div>
               <p className="text-[#f7941d] text-sm font-medium mb-0.5">Active Tournament</p>
-              <p className="text-white font-semibold">{(activeTournament as { name: string }).name}</p>
+              <p className="text-white font-semibold">{activeTournament.name}</p>
               <p className="text-gray-400 text-sm font-mono">{activeTournament.code}</p>
             </div>
             <a
@@ -59,15 +60,12 @@ export default async function DashboardPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Create */}
           {!activeTournament && (
             <Card bordered>
               <h2 className="text-white font-semibold mb-4">Create Tournament</h2>
               <CreateTournamentForm />
             </Card>
           )}
-
-          {/* Join */}
           {!activeTournament && (
             <Card bordered>
               <h2 className="text-white font-semibold mb-4">Join Tournament</h2>
@@ -76,7 +74,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* My tournaments */}
         {myTournaments.length > 0 && (
           <div className="mt-8">
             <h2 className="text-white font-semibold mb-4">My Tournaments</h2>
@@ -84,7 +81,7 @@ export default async function DashboardPage() {
               {myTournaments.map(t => (
                 <TournamentCard
                   key={t.code}
-                  tournament={t as Parameters<typeof TournamentCard>[0]['tournament']}
+                  tournament={{ ...t, teams: t.teams as Record<string, unknown> }}
                   currentUserId={session.userId}
                 />
               ))}
@@ -92,7 +89,6 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Open tournaments */}
         {!activeTournament && openTournaments.length > 0 && (
           <div className="mt-8">
             <h2 className="text-white font-semibold mb-4">Open Tournaments</h2>
@@ -100,7 +96,7 @@ export default async function DashboardPage() {
               {openTournaments.map(t => (
                 <TournamentCard
                   key={t.code}
-                  tournament={t as Parameters<typeof TournamentCard>[0]['tournament']}
+                  tournament={{ ...t, teams: t.teams as Record<string, unknown> }}
                   currentUserId={session.userId}
                 />
               ))}

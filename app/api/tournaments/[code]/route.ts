@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const tournament = getTournament(code);
+  const tournament = await getTournament(code);
   if (!tournament) {
     return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
   }

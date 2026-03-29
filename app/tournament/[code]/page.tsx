@@ -4,7 +4,6 @@ import { getSession } from '@/lib/auth';
 import { getTournament } from '@/lib/store';
 import Header from '@/components/layout/Header';
 import TournamentRoom from '@/components/tournament/TournamentRoom';
-import { Team, TournamentPlayer } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,24 +17,16 @@ export default async function TournamentPage({
   const session = getSession(cookieStore.get('ipl-session')?.value);
   if (!session) redirect('/');
 
-  const tournament = getTournament(code);
+  const tournament = await getTournament(code);
   if (!tournament) notFound();
 
   // Check user is a participant
-  const isMember = Array.from(tournament.teams.values()).some(t => t.userId === session.userId);
+  const isMember = Object.values(tournament.teams).some(t => t.userId === session.userId);
   if (!isMember) {
     redirect('/dashboard');
   }
 
   const isHost = tournament.createdBy === session.userId;
-
-  // Serialize teams (Maps → plain objects for client)
-  const serializedTeams: Record<string, Team> = {};
-  for (const [id, team] of tournament.teams) {
-    serializedTeams[id] = { ...team, players: team.players };
-  }
-
-  const serializedPlayers: Record<string, TournamentPlayer> = Object.fromEntries(tournament.players);
 
   return (
     <div className="min-h-screen">
@@ -45,9 +36,9 @@ export default async function TournamentPage({
         tournamentName={tournament.name}
         isHost={isHost}
         userId={session.userId}
-        initialTeams={serializedTeams}
+        initialTeams={tournament.teams}
         initialAuctionState={tournament.auctionState}
-        initialPlayers={serializedPlayers}
+        initialPlayers={tournament.players}
         initialClosed={tournament.closed ?? false}
       />
     </div>

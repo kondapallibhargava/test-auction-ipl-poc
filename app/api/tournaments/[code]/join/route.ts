@@ -21,7 +21,7 @@ export async function POST(
       return NextResponse.json({ error: 'teamName required' }, { status: 400 });
     }
 
-    const team = joinTournament(session.userId, code, teamName.trim());
+    const team = await joinTournament(session.userId, code, teamName.trim());
     return NextResponse.json(team, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to join tournament';

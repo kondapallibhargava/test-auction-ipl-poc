@@ -1,42 +1,12 @@
-import { User, Tournament, Team, TournamentPlayer, Bid, AuctionState, TournamentEvent, Match, TournamentMatchResult, PlayerPoints } from './types';
+import {
+  User, Tournament, Team, TournamentPlayer, Bid, AuctionState,
+  Match, TournamentMatchResult, Player, PlayerPoints,
+} from './types';
 import { calculatePlayerPoints, calculateTeamScore } from './scoring';
-import { SEEDED_PLAYERS } from './seed';
+import { db } from './db';
 import crypto from 'crypto';
 
-interface StoreShape {
-  users: Map<string, User>; // userId -> User
-  usersByUsername: Map<string, string>; // username -> userId
-  tournaments: Map<string, Tournament>; // code -> Tournament
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __store: StoreShape | undefined;
-  // eslint-disable-next-line no-var
-  var __sseClients: Map<string, Set<ReadableStreamDefaultController>> | undefined;
-}
-
-function initStore(): StoreShape {
-  return {
-    users: new Map(),
-    usersByUsername: new Map(),
-    tournaments: new Map(),
-  };
-}
-
-export function getStore(): StoreShape {
-  if (!globalThis.__store) {
-    globalThis.__store = initStore();
-  }
-  return globalThis.__store;
-}
-
-export function getSseClients(): Map<string, Set<ReadableStreamDefaultController>> {
-  if (!globalThis.__sseClients) {
-    globalThis.__sseClients = new Map();
-  }
-  return globalThis.__sseClients;
-}
+// ── ID helpers ─────────────────────────────────────────────────────────────
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -51,64 +21,222 @@ function generateTournamentCode(): string {
   return code;
 }
 
-// ── Auth helpers ──────────────────────────────────────────────────────────────
+// ── DB row → domain type mappers ──────────────────────────────────────────
 
-export function registerUser(username: string, passwordHash: string): User {
-  const store = getStore();
-  if (store.usersByUsername.has(username.toLowerCase())) {
-    throw new Error('Username already taken');
+function mapDbPlayer(p: {
+  id: string; name: string; role: string; base_price: number;
+  nationality: string; is_active: boolean;
+}): Player {
+  return {
+    id: p.id,
+    name: p.name,
+    role: p.role as Player['role'],
+    nationality: p.nationality as Player['nationality'],
+    basePrice: p.base_price,
+  };
+}
+
+// ── Tournament assembly ───────────────────────────────────────────────────
+
+async function loadTournament(code: string): Promise<Tournament | null> {
+  const { data: t } = await db
+    .from('tournaments')
+    .select('*')
+    .eq('code', code)
+    .single();
+  if (!t) return null;
+
+  const { data: teamsData } = await db
+    .from('teams')
+    .select('*')
+    .eq('tournament_code', code);
+
+  const teamIds = (teamsData ?? []).map((row: { team_id: string }) => row.team_id);
+
+  const { data: tpData } = teamIds.length > 0
+    ? await db.from('team_players').select('*').in('team_id', teamIds)
+    : { data: [] };
+
+  const { data: playersData } = await db
+    .from('players')
+    .select('*')
+    .eq('is_active', true);
+
+  // Build player lookup
+  const playerById: Record<string, Player> = {};
+  for (const p of playersData ?? []) {
+    playerById[p.id] = mapDbPlayer(p);
   }
-  const user: User = {
-    id: generateId(),
+
+  // Build sold index
+  const soldToTeam: Record<string, string> = {};
+  const soldForPrice: Record<string, number> = {};
+  for (const tp of tpData ?? []) {
+    soldToTeam[tp.player_id] = tp.team_id;
+    soldForPrice[tp.player_id] = tp.bought_at;
+  }
+
+  // Build teams Record
+  const teams: Record<string, Team> = {};
+  for (const team of teamsData ?? []) {
+    const teamPlayerRows = (tpData ?? []).filter(
+      (tp: { team_id: string }) => tp.team_id === team.team_id
+    );
+    const teamPlayers: TournamentPlayer[] = teamPlayerRows
+      .filter((tp: { player_id: string }) => playerById[tp.player_id])
+      .map((tp: { player_id: string; bought_at: number }) => ({
+        ...playerById[tp.player_id],
+        isSold: true,
+        soldTo: team.team_id,
+        soldFor: tp.bought_at,
+      }));
+
+    teams[team.team_id] = {
+      id: team.team_id,
+      teamName: team.name,
+      userId: team.owner_id,
+      tournamentCode: code,
+      initialBudget: t.team_budget,
+      remainingBudget: team.budget,
+      players: teamPlayers,
+      registeredAt: new Date(team.created_at ?? Date.now()),
+    };
+  }
+
+  // Build players Record with sold status
+  const players: Record<string, TournamentPlayer> = {};
+  for (const p of playersData ?? []) {
+    players[p.id] = {
+      ...playerById[p.id],
+      isSold: p.id in soldToTeam,
+      soldTo: soldToTeam[p.id],
+      soldFor: soldForPrice[p.id],
+    };
+  }
+
+  return {
+    id: t.tournament_id,
+    code: t.code,
+    name: t.name,
+    createdBy: t.created_by,
+    status: t.status,
+    teamBudget: t.team_budget,
+    maxTeams: t.max_teams,
+    teams,
+    players,
+    auctionState: t.auction_state as AuctionState,
+    createdAt: new Date(t.created_at),
+    closed: t.closed,
+    matchResults: (t.match_results ?? []) as TournamentMatchResult[],
+  };
+}
+
+async function saveAuctionState(
+  code: string,
+  auctionState: AuctionState,
+  status?: string,
+  closed?: boolean,
+  matchResults?: TournamentMatchResult[]
+): Promise<void> {
+  const update: Record<string, unknown> = { auction_state: auctionState };
+  if (status !== undefined) update.status = status;
+  if (closed !== undefined) update.closed = closed;
+  if (matchResults !== undefined) update.match_results = matchResults;
+  await db.from('tournaments').update(update).eq('code', code);
+}
+
+// ── Auth helpers ──────────────────────────────────────────────────────────
+
+export async function registerUser(username: string, passwordHash: string): Promise<User> {
+  const { data: existing } = await db
+    .from('users')
+    .select('user_id')
+    .eq('username', username.toLowerCase())
+    .single();
+  if (existing) throw new Error('Username already taken');
+
+  const userId = generateId();
+  const { error } = await db.from('users').insert({
+    user_id: userId,
+    username,
+    password_hash: passwordHash,
+  });
+  if (error) throw new Error(error.message);
+
+  return {
+    id: userId,
     username,
     passwordHash,
     createdAt: new Date(),
   };
-  store.users.set(user.id, user);
-  store.usersByUsername.set(username.toLowerCase(), user.id);
-  return user;
 }
 
-export function loginUser(username: string, password: string): User | null {
-  const store = getStore();
-  const userId = store.usersByUsername.get(username.toLowerCase());
-  if (!userId) return null;
-  const user = store.users.get(userId);
-  if (!user) return null;
-  if (user.passwordHash !== password) return null;
-  return user;
+export async function getUserByUsername(username: string): Promise<User | null> {
+  const { data } = await db
+    .from('users')
+    .select('*')
+    .eq('username', username.toLowerCase())
+    .single();
+  if (!data) return null;
+  return {
+    id: data.user_id,
+    username: data.username,
+    passwordHash: data.password_hash,
+    createdAt: new Date(data.created_at),
+    activeTournamentCode: data.active_tournament_code ?? undefined,
+  };
 }
 
-export function getUserById(userId: string): User | undefined {
-  return getStore().users.get(userId);
+export async function getUserById(userId: string): Promise<User | undefined> {
+  const { data } = await db
+    .from('users')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+  if (!data) return undefined;
+  return {
+    id: data.user_id,
+    username: data.username,
+    passwordHash: data.password_hash,
+    createdAt: new Date(data.created_at),
+    activeTournamentCode: data.active_tournament_code ?? undefined,
+  };
 }
 
-// ── Tournament helpers ────────────────────────────────────────────────────────
+// ── Player helpers ────────────────────────────────────────────────────────
 
-export function createTournament(
+export async function getPlayers(): Promise<TournamentPlayer[]> {
+  const { data } = await db.from('players').select('*').eq('is_active', true);
+  return (data ?? []).map((p) => ({ ...mapDbPlayer(p), isSold: false }));
+}
+
+// ── Tournament helpers ────────────────────────────────────────────────────
+
+export async function createTournament(
   userId: string,
   name: string,
   teamBudget: number,
   maxTeams: number
-): Tournament {
-  const store = getStore();
-  const user = store.users.get(userId);
+): Promise<Tournament> {
+  const user = await getUserById(userId);
   if (!user) throw new Error('User not found');
   if (user.activeTournamentCode) throw new Error('Already in an active tournament');
 
+  const { data: playersData } = await db
+    .from('players')
+    .select('id')
+    .eq('is_active', true);
+  const playerQueue = (playersData ?? []).map((p: { id: string }) => p.id);
+
+  // Generate unique code
   let code = generateTournamentCode();
-  while (store.tournaments.has(code)) {
+  while (true) {
+    const { data } = await db.from('tournaments').select('code').eq('code', code).single();
+    if (!data) break;
     code = generateTournamentCode();
   }
 
-  // Build player pool
-  const players = new Map<string, TournamentPlayer>();
-  for (const p of SEEDED_PLAYERS) {
-    players.set(p.id, { ...p, isSold: false });
-  }
-
-  const playerQueue = SEEDED_PLAYERS.map((p) => p.id);
-
+  const tournamentId = generateId();
   const auctionState: AuctionState = {
     status: 'lobby',
     currentPlayerIndex: 0,
@@ -119,58 +247,62 @@ export function createTournament(
     auctionLog: [],
   };
 
-  const tournament: Tournament = {
-    id: generateId(),
+  await db.from('tournaments').insert({
     code,
+    tournament_id: tournamentId,
     name,
-    createdBy: userId,
+    created_by: userId,
     status: 'lobby',
-    teamBudget,
-    maxTeams,
-    teams: new Map(),
-    players,
-    auctionState,
-    createdAt: new Date(),
-    matchResults: [],
-  };
+    closed: false,
+    team_budget: teamBudget,
+    max_teams: maxTeams,
+    auction_state: auctionState,
+    match_results: [],
+  });
 
-  // Create host's team
-  const hostTeam: Team = {
-    id: generateId(),
-    teamName: `${user.username}'s Team`,
-    userId,
-    tournamentCode: code,
-    initialBudget: teamBudget,
-    remainingBudget: teamBudget,
-    players: [],
-    registeredAt: new Date(),
-  };
-  tournament.teams.set(hostTeam.id, hostTeam);
+  const teamId = generateId();
+  await db.from('teams').insert({
+    team_id: teamId,
+    tournament_code: code,
+    owner_id: userId,
+    name: `${user.username}'s Team`,
+    initial_budget: teamBudget,
+    budget: teamBudget,
+  });
 
-  store.tournaments.set(code, tournament);
-  user.activeTournamentCode = code;
+  await db.from('users').update({ active_tournament_code: code }).eq('user_id', userId);
 
-  return tournament;
+  return (await loadTournament(code))!;
 }
 
-export function joinTournament(userId: string, code: string, teamName: string): Team {
-  const store = getStore();
-  const user = store.users.get(userId);
+export async function joinTournament(userId: string, code: string, teamName: string): Promise<Team> {
+  const user = await getUserById(userId);
   if (!user) throw new Error('User not found');
   if (user.activeTournamentCode) throw new Error('Already in an active tournament');
 
-  const tournament = store.tournaments.get(code);
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.status !== 'lobby') throw new Error('Tournament already started');
-  if (tournament.teams.size >= tournament.maxTeams) throw new Error('Tournament is full');
-
-  // Check user not already in tournament
-  for (const team of tournament.teams.values()) {
-    if (team.userId === userId) throw new Error('Already in this tournament');
+  if (Object.keys(tournament.teams).length >= tournament.maxTeams) {
+    throw new Error('Tournament is full');
   }
+  const alreadyIn = Object.values(tournament.teams).some(t => t.userId === userId);
+  if (alreadyIn) throw new Error('Already in this tournament');
 
-  const team: Team = {
-    id: generateId(),
+  const teamId = generateId();
+  await db.from('teams').insert({
+    team_id: teamId,
+    tournament_code: code,
+    owner_id: userId,
+    name: teamName,
+    initial_budget: tournament.teamBudget,
+    budget: tournament.teamBudget,
+  });
+
+  await db.from('users').update({ active_tournament_code: code }).eq('user_id', userId);
+
+  return {
+    id: teamId,
     teamName,
     userId,
     tournamentCode: code,
@@ -179,68 +311,50 @@ export function joinTournament(userId: string, code: string, teamName: string): 
     players: [],
     registeredAt: new Date(),
   };
-
-  tournament.teams.set(team.id, team);
-  user.activeTournamentCode = code;
-
-  broadcastTournamentEvent(code, {
-    type: 'team_joined',
-    payload: { message: `${teamName} has joined the tournament`, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
-  return team;
 }
 
-export function leaveTournament(userId: string, code: string): void {
-  const store = getStore();
-  const user = store.users.get(userId);
-  if (!user) throw new Error('User not found');
-
-  const tournament = store.tournaments.get(code);
+export async function leaveTournament(userId: string, code: string): Promise<void> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.status !== 'lobby') throw new Error('Cannot leave an active tournament');
   if (tournament.createdBy === userId) throw new Error('Host cannot leave the tournament');
 
-  let teamId: string | undefined;
-  for (const [id, team] of tournament.teams) {
-    if (team.userId === userId) {
-      teamId = id;
-      break;
-    }
-  }
-  if (!teamId) throw new Error('Not in this tournament');
+  const team = Object.values(tournament.teams).find(t => t.userId === userId);
+  if (!team) throw new Error('Not in this tournament');
 
-  tournament.teams.delete(teamId);
-  user.activeTournamentCode = undefined;
-
-  broadcastTournamentEvent(code, {
-    type: 'team_left',
-    payload: { message: 'A team has left the tournament', teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
+  await db.from('teams').delete().eq('team_id', team.id);
+  await db.from('users').update({ active_tournament_code: null }).eq('user_id', userId);
 }
 
-export function getTournament(code: string): Tournament | undefined {
-  return getStore().tournaments.get(code);
+export async function getTournament(code: string): Promise<Tournament | null> {
+  return loadTournament(code);
 }
 
-export function listTournaments(): Tournament[] {
-  return Array.from(getStore().tournaments.values());
+export async function listTournaments(): Promise<Tournament[]> {
+  const { data } = await db
+    .from('tournaments')
+    .select('code')
+    .order('created_at', { ascending: false });
+  if (!data) return [];
+
+  const tournaments = await Promise.all(
+    data.map((row: { code: string }) => loadTournament(row.code))
+  );
+  return tournaments.filter((t): t is Tournament => t !== null);
 }
 
-// ── Auction helpers ───────────────────────────────────────────────────────────
+// ── Auction helpers ───────────────────────────────────────────────────────
 
-export function startAuction(code: string, userId: string): AuctionState {
-  const tournament = getTournament(code);
+export async function startAuction(code: string, userId: string): Promise<AuctionState> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can start the auction');
   if (tournament.auctionState.status !== 'lobby') throw new Error('Auction already started');
-  if (tournament.teams.size < 2) throw new Error('Need at least 2 teams to start');
+  if (Object.keys(tournament.teams).length < 2) throw new Error('Need at least 2 teams to start');
 
   const state = tournament.auctionState;
   const firstPlayerId = state.playerQueue[0];
-  const firstPlayer = tournament.players.get(firstPlayerId) ?? null;
+  const firstPlayer = tournament.players[firstPlayerId] ?? null;
 
   state.status = 'player_up';
   state.currentPlayer = firstPlayer;
@@ -248,143 +362,109 @@ export function startAuction(code: string, userId: string): AuctionState {
   state.currentHighestBid = null;
   state.bidHistory = [];
   state.auctionLog.push(`Auction started! First player: ${firstPlayer?.name}`);
-  tournament.status = 'active';
 
-  broadcastTournamentEvent(code, {
-    type: 'auction_update',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
+  await saveAuctionState(code, state, 'active');
   return state;
 }
 
-export function markSold(code: string, userId: string): AuctionState {
-  const tournament = getTournament(code);
+export async function markSold(code: string, userId: string): Promise<AuctionState> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can mark sold');
 
   const state = tournament.auctionState;
   if (state.status !== 'player_up') throw new Error('No active player');
   if (!state.currentHighestBid) throw new Error('No bids placed');
+  if (!state.currentPlayer) throw new Error('No current player');
 
   const { currentPlayer, currentHighestBid } = state;
-  if (!currentPlayer) throw new Error('No current player');
-
-  // Deduct budget from winning team
-  const winningTeam = tournament.teams.get(currentHighestBid.teamId);
+  const winningTeam = tournament.teams[currentHighestBid.teamId];
   if (!winningTeam) throw new Error('Winning team not found');
 
+  // Update team budget in DB
   const costInMillions = currentHighestBid.amount / 100;
-  winningTeam.remainingBudget = Math.round((winningTeam.remainingBudget - costInMillions) * 100) / 100;
+  const newBudget = Math.round((winningTeam.remainingBudget - costInMillions) * 100) / 100;
+  await db.from('teams').update({ budget: newBudget }).eq('team_id', winningTeam.id);
 
-  // Mark player as sold
-  currentPlayer.isSold = true;
-  currentPlayer.soldTo = currentHighestBid.teamId;
-  currentPlayer.soldFor = currentHighestBid.amount;
-  winningTeam.players.push({ ...currentPlayer });
+  // Record player as sold in team_players
+  await db.from('team_players').insert({
+    team_id: winningTeam.id,
+    player_id: currentPlayer.id,
+    bought_at: currentHighestBid.amount,
+  });
 
-  state.status = 'sold';
   state.auctionLog.push(
     `${currentPlayer.name} SOLD to ${winningTeam.teamName} for $${currentHighestBid.amount}K`
   );
 
-  broadcastTournamentEvent(code, {
-    type: 'player_sold',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
-  // Auto-advance after 2s
-  setTimeout(() => advanceToNextPlayer(code), 2000);
+  // Advance to next player (returns true if auction completed)
+  const completed = advanceState(state, tournament.players);
+  await saveAuctionState(code, state, completed ? 'completed' : 'active');
 
   return state;
 }
 
-export function markUnsold(code: string, userId: string): AuctionState {
-  const tournament = getTournament(code);
+export async function markUnsold(code: string, userId: string): Promise<AuctionState> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can mark unsold');
 
   const state = tournament.auctionState;
   if (state.status !== 'player_up') throw new Error('No active player');
+  if (!state.currentPlayer) throw new Error('No current player');
 
-  const { currentPlayer } = state;
-  if (!currentPlayer) throw new Error('No current player');
+  state.auctionLog.push(`${state.currentPlayer.name} went UNSOLD`);
 
-  state.status = 'unsold';
-  state.auctionLog.push(`${currentPlayer.name} went UNSOLD`);
-
-  broadcastTournamentEvent(code, {
-    type: 'player_unsold',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
-  // Auto-advance after 2s
-  setTimeout(() => advanceToNextPlayer(code), 2000);
+  // Advance to next player (returns true if auction completed)
+  const completed = advanceState(state, tournament.players);
+  await saveAuctionState(code, state, completed ? 'completed' : 'active');
 
   return state;
 }
 
-function advanceToNextPlayer(code: string): void {
-  const tournament = getTournament(code);
-  if (!tournament) return;
-
-  const state = tournament.auctionState;
+// Internal: mutates state to advance to next player (or complete).
+// Returns true if the auction is now completed.
+function advanceState(state: AuctionState, players: Record<string, TournamentPlayer>): boolean {
   const nextIndex = state.currentPlayerIndex + 1;
-
   if (nextIndex >= state.playerQueue.length) {
-    // Auction complete
     state.status = 'completed';
     state.currentPlayer = null;
     state.currentHighestBid = null;
     state.auctionLog.push('Auction completed!');
-    tournament.status = 'completed';
-
-    broadcastTournamentEvent(code, {
-      type: 'auction_complete',
-      payload: { auctionState: state, teams: serializeTeams(tournament) },
-      timestamp: new Date().toISOString(),
-    });
-    return;
+    return true;
   }
-
   state.currentPlayerIndex = nextIndex;
   const nextPlayerId = state.playerQueue[nextIndex];
-  const nextPlayer = tournament.players.get(nextPlayerId) ?? null;
-  state.currentPlayer = nextPlayer;
+  state.currentPlayer = players[nextPlayerId] ?? null;
   state.currentHighestBid = null;
   state.bidHistory = [];
   state.status = 'player_up';
-  state.auctionLog.push(`Next player: ${nextPlayer?.name}`);
-
-  broadcastTournamentEvent(code, {
-    type: 'auction_update',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
+  state.auctionLog.push(`Next player: ${state.currentPlayer?.name}`);
+  return false;
 }
 
-export function resetAuction(code: string, userId: string): AuctionState {
-  const tournament = getTournament(code);
+export async function resetAuction(code: string, userId: string): Promise<AuctionState> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can reset');
 
-  // Reset all players
-  for (const player of tournament.players.values()) {
-    player.isSold = false;
-    player.soldTo = undefined;
-    player.soldFor = undefined;
+  // Delete all team_players for this tournament
+  const teamIds = Object.keys(tournament.teams);
+  if (teamIds.length > 0) {
+    await db.from('team_players').delete().in('team_id', teamIds);
   }
 
-  // Reset all team budgets and players
-  for (const team of tournament.teams.values()) {
-    team.remainingBudget = team.initialBudget;
-    team.players = [];
+  // Reset all team budgets
+  for (const team of Object.values(tournament.teams)) {
+    await db.from('teams').update({ budget: team.initialBudget }).eq('team_id', team.id);
   }
 
-  const playerQueue = SEEDED_PLAYERS.map((p) => p.id);
+  const { data: playersData } = await db
+    .from('players')
+    .select('id')
+    .eq('is_active', true);
+  const playerQueue = (playersData ?? []).map((p: { id: string }) => p.id);
+
   const state: AuctionState = {
     status: 'lobby',
     currentPlayerIndex: 0,
@@ -395,34 +475,24 @@ export function resetAuction(code: string, userId: string): AuctionState {
     auctionLog: ['Auction reset by host'],
   };
 
-  tournament.auctionState = state;
-  tournament.status = 'lobby';
-
-  broadcastTournamentEvent(code, {
-    type: 'state_update',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
+  await saveAuctionState(code, state, 'lobby');
   return state;
 }
 
-export function rerunUnsoldAuction(code: string, userId: string): AuctionState {
-  const tournament = getTournament(code);
+export async function rerunUnsoldAuction(code: string, userId: string): Promise<AuctionState> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can re-run the auction');
   if (tournament.auctionState.status !== 'completed') throw new Error('Auction must be completed first');
   if (tournament.closed) throw new Error('Auction is already closed');
 
-  const unsoldPlayerIds = Array.from(tournament.players.values())
-    .filter((p) => !p.isSold)
-    .map((p) => p.id);
-
+  const unsoldPlayerIds = Object.values(tournament.players)
+    .filter(p => !p.isSold)
+    .map(p => p.id);
   if (unsoldPlayerIds.length === 0) throw new Error('No unsold players to re-run');
 
+  const firstPlayer = tournament.players[unsoldPlayerIds[0]] ?? null;
   const state = tournament.auctionState;
-  const firstPlayer = tournament.players.get(unsoldPlayerIds[0]) ?? null;
-
   state.playerQueue = unsoldPlayerIds;
   state.currentPlayerIndex = 0;
   state.currentPlayer = firstPlayer;
@@ -430,81 +500,73 @@ export function rerunUnsoldAuction(code: string, userId: string): AuctionState {
   state.bidHistory = [];
   state.status = 'player_up';
   state.auctionLog.push(`Re-run started for ${unsoldPlayerIds.length} unsold players`);
-  tournament.status = 'active';
 
-  broadcastTournamentEvent(code, {
-    type: 'auction_update',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
+  await saveAuctionState(code, state, 'active');
   return state;
 }
 
-export function closeAuction(code: string, userId: string): AuctionState {
-  const tournament = getTournament(code);
+export async function closeAuction(code: string, userId: string): Promise<AuctionState> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can close the auction');
   if (tournament.auctionState.status !== 'completed') throw new Error('Auction must be completed first');
 
-  tournament.closed = true;
+  await db.from('tournaments').update({ closed: true }).eq('code', code);
 
-  // Clear activeTournamentCode for all teams
-  const store = getStore();
-  for (const team of tournament.teams.values()) {
-    const user = store.users.get(team.userId);
-    if (user) user.activeTournamentCode = undefined;
+  // Clear activeTournamentCode for all participants
+  const ownerIds = Object.values(tournament.teams).map(t => t.userId);
+  if (ownerIds.length > 0) {
+    await db.from('users').update({ active_tournament_code: null }).in('user_id', ownerIds);
   }
 
   tournament.auctionState.auctionLog.push('Auction closed by host');
-
-  broadcastTournamentEvent(code, {
-    type: 'state_update',
-    payload: { auctionState: tournament.auctionState, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
+  await saveAuctionState(code, tournament.auctionState);
 
   return tournament.auctionState;
 }
 
-export function importMatch(code: string, userId: string, match: Match): TournamentMatchResult {
-  const tournament = getTournament(code);
+// ── Match scoring ─────────────────────────────────────────────────────────
+
+export async function importMatch(
+  code: string,
+  userId: string,
+  match: Match
+): Promise<TournamentMatchResult> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
   if (tournament.createdBy !== userId) throw new Error('Only the host can import match results');
   if (tournament.status !== 'completed') throw new Error('Tournament must be completed first');
+  if ((tournament.matchResults ?? []).some(r => r.match.id === match.id)) {
+    throw new Error('This match has already been imported');
+  }
 
-  // Build a name→teamId lookup
-  const playerTeamMap = new Map<string, string>(); // playerName.lower → teamId
-  for (const team of tournament.teams.values()) {
+  // Build name→teamId lookup
+  const playerTeamMap = new Map<string, string>();
+  for (const team of Object.values(tournament.teams)) {
     for (const p of team.players) {
       playerTeamMap.set(p.name.toLowerCase(), team.id);
     }
   }
 
-  // Build per-team performance lists
   const teamPerformances = new Map<string, typeof match.performances>();
-  for (const team of tournament.teams.values()) {
+  for (const team of Object.values(tournament.teams)) {
     teamPerformances.set(team.id, []);
   }
 
-  // Unowned player scores (teamId undefined)
   const unownedScores: PlayerPoints[] = [];
-
   for (const perf of match.performances) {
     const teamId = playerTeamMap.get(perf.playerName.toLowerCase());
     if (teamId) {
       teamPerformances.get(teamId)!.push(perf);
     } else {
-      const points = calculatePlayerPoints(perf);
-      unownedScores.push(points);
+      unownedScores.push(calculatePlayerPoints(perf));
     }
   }
 
-  const teamScores = Array.from(tournament.teams.values()).map((team) => {
+  const teamScores = Object.values(tournament.teams).map(team => {
     const perfs = teamPerformances.get(team.id) ?? [];
     return calculateTeamScore(team, perfs);
   });
-
   teamScores.sort((a, b) => b.totalPoints - a.totalPoints);
 
   const result: TournamentMatchResult = {
@@ -513,39 +575,25 @@ export function importMatch(code: string, userId: string, match: Match): Tournam
     importedAt: new Date().toISOString(),
   };
 
-  if (!tournament.matchResults) tournament.matchResults = [];
-  tournament.matchResults.push(result);
-
-  broadcastTournamentEvent(code, {
-    type: 'state_update',
-    payload: { auctionState: tournament.auctionState, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
+  const matchResults = [...(tournament.matchResults ?? []), result];
+  await saveAuctionState(code, tournament.auctionState, undefined, undefined, matchResults);
 
   return result;
 }
 
-// ── Bid helpers ───────────────────────────────────────────────────────────────
+// ── Bid helpers ───────────────────────────────────────────────────────────
 
-export function placeBid(code: string, userId: string, amount: number): Bid {
-  const tournament = getTournament(code);
+export async function placeBid(code: string, userId: string, amount: number): Promise<Bid> {
+  const tournament = await loadTournament(code);
   if (!tournament) throw new Error('Tournament not found');
 
   const state = tournament.auctionState;
   if (state.status !== 'player_up') throw new Error('No active auction');
   if (!state.currentPlayer) throw new Error('No current player');
 
-  // Find team for this user
-  let team: Team | undefined;
-  for (const t of tournament.teams.values()) {
-    if (t.userId === userId) {
-      team = t;
-      break;
-    }
-  }
+  const team = Object.values(tournament.teams).find(t => t.userId === userId);
   if (!team) throw new Error('Not a participant in this tournament');
 
-  // Validate bid amount
   if (!state.currentHighestBid) {
     if (amount < state.currentPlayer.basePrice) {
       throw new Error(`Minimum bid is $${state.currentPlayer.basePrice}K`);
@@ -560,7 +608,6 @@ export function placeBid(code: string, userId: string, amount: number): Bid {
     }
   }
 
-  // Check budget (amount is in thousands/K, budget is in millions/M)
   const amountInMillions = amount / 100;
   if (amountInMillions > team.remainingBudget) {
     throw new Error(`Insufficient budget. You have $${team.remainingBudget}M remaining`);
@@ -580,51 +627,19 @@ export function placeBid(code: string, userId: string, amount: number): Bid {
   state.bidHistory.push(bid);
   state.auctionLog.push(`${team.teamName} bid $${amount}K for ${state.currentPlayer.name}`);
 
-  broadcastTournamentEvent(code, {
-    type: 'bid_placed',
-    payload: { auctionState: state, teams: serializeTeams(tournament) },
-    timestamp: new Date().toISOString(),
-  });
-
+  await saveAuctionState(code, state);
   return bid;
 }
 
-// ── SSE broadcasting ──────────────────────────────────────────────────────────
-
-export function broadcastTournamentEvent(code: string, event: TournamentEvent): void {
-  const clients = getSseClients().get(code);
-  if (!clients || clients.size === 0) return;
-
-  const data = `data: ${JSON.stringify(event)}\n\n`;
-  const deadClients: ReadableStreamDefaultController[] = [];
-
-  for (const controller of clients) {
-    try {
-      controller.enqueue(new TextEncoder().encode(data));
-    } catch {
-      deadClients.push(controller);
-    }
-  }
-
-  for (const dead of deadClients) {
-    clients.delete(dead);
-  }
-}
-
-// ── Serialization helpers ─────────────────────────────────────────────────────
-
-export function serializeTeams(tournament: Tournament): Record<string, Omit<Team, 'players'> & { players: TournamentPlayer[] }> {
-  const result: Record<string, Omit<Team, 'players'> & { players: TournamentPlayer[] }> = {};
-  for (const [id, team] of tournament.teams) {
-    result[id] = { ...team, players: team.players };
-  }
-  return result;
-}
+// ── Serialization helpers ─────────────────────────────────────────────────
 
 export function serializeTournament(tournament: Tournament) {
   return {
     ...tournament,
-    teams: serializeTeams(tournament),
-    players: Object.fromEntries(tournament.players),
+    teams: tournament.teams,
+    players: tournament.players,
+    createdAt: tournament.createdAt instanceof Date
+      ? tournament.createdAt.toISOString()
+      : tournament.createdAt,
   };
 }

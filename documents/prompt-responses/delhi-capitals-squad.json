@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Abishek Porel",
+    "role": "Wicket-Keeper",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "David Miller",
+    "role": "Batsman",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Karun Nair",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Pathum Nissanka",
+    "role": "Batsman",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Sahil Parakh",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "KL Rahul",
+    "role": "Wicket-Keeper",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Nitish Rana",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Prithvi Shaw",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Tristan Stubbs",
+    "role": "Wicket-Keeper",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Ben Duckett",
+    "role": "Wicket-Keeper",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Axar Patel",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Ajay Mandal",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Sameer Rizvi",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Ashutosh Sharma",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Madhav Tiwari",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Auqib Nabi",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Dushmantha Chameera",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Kyle Jamieson",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Kuldeep Yadav",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Mukesh Kumar",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "T Natarajan",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Lungi Ngidi",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Vipraj Nigam",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Mitchell Starc",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Tripurana Vijay",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  }
+]

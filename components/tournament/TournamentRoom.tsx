@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { Team, AuctionState, TournamentEvent, TournamentPlayer } from '@/lib/types';
-import { useTournamentStream } from '@/hooks/useTournamentStream';
+import { useState, useEffect, useRef } from 'react';
+import { Team, AuctionState, TournamentPlayer } from '@/lib/types';
 import CurrentPlayerCard from './CurrentPlayerCard';
 import BidPanel from './BidPanel';
 import BidHistory from './BidHistory';
@@ -41,23 +40,8 @@ export default function TournamentRoom({
   const closedRef = useRef(initialClosed);
   closedRef.current = isClosed;
 
-  const handleEvent = useCallback((event: TournamentEvent) => {
-    if (event.payload.auctionState) {
-      setAuctionState(event.payload.auctionState);
-    }
-    if (event.payload.teams) {
-      setTeams(event.payload.teams as Record<string, Team>);
-    }
-  }, []);
-
-  useTournamentStream({ code, onEvent: handleEvent });
-
-  // Polling: primary sync mechanism for all users (2s interval).
-  // Guarantees state updates even when SSE events are missed (e.g. Turbopack
-  // dev mode, reconnects, tab backgrounding).
-  const statusRef = useRef(auctionState.status);
-  statusRef.current = auctionState.status;
-
+  // Polling every 2s is the primary (and only) real-time mechanism.
+  // SSE was removed — Vercel serverless functions are stateless per-request.
   useEffect(() => {
     const poll = async () => {
       if (closedRef.current) return;

@@ -1,23 +1,34 @@
-// TODO: Replace with NextAuth.js + OAuth when going live
+import { createHmac } from 'crypto';
+import bcrypt from 'bcryptjs';
 import { User, Session } from './types';
-import { registerUser, loginUser } from './store';
+import { registerUser, getUserByUsername } from './store';
+
+const SECRET = process.env.SESSION_SECRET ?? 'dev-only-insecure-secret';
 
 export async function register(username: string, password: string): Promise<User> {
-  // TODO: Hash password with bcrypt before storing
-  return registerUser(username, password);
+  const hash = await bcrypt.hash(password, 10);
+  return registerUser(username, hash);
 }
 
 export async function login(username: string, password: string): Promise<User | null> {
-  // TODO: Use bcrypt.compare when passwords are hashed
-  return loginUser(username, password);
+  const user = await getUserByUsername(username);
+  if (!user) return null;
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) return null;
+  return user;
 }
 
 export function getSession(cookieValue: string | undefined): Session | null {
   if (!cookieValue) return null;
+  const dotIndex = cookieValue.lastIndexOf('.');
+  if (dotIndex === -1) return null;
+  const payload = cookieValue.slice(0, dotIndex);
+  const sig = cookieValue.slice(dotIndex + 1);
+  if (!payload || !sig) return null;
+  const expected = createHmac('sha256', SECRET).update(payload).digest('hex');
+  if (expected !== sig) return null;
   try {
-    // TODO: Verify HMAC signature before decoding
-    const decoded = Buffer.from(cookieValue, 'base64').toString('utf-8');
-    const session = JSON.parse(decoded) as Session;
+    const session = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8')) as Session;
     if (!session.userId || !session.username) return null;
     return session;
   } catch {
@@ -26,7 +37,8 @@ export function getSession(cookieValue: string | undefined): Session | null {
 }
 
 export function createSessionCookie(user: User): string {
-  // TODO: Add HMAC signing for production use
   const session: Session = { userId: user.id, username: user.username };
-  return Buffer.from(JSON.stringify(session)).toString('base64');
+  const payload = Buffer.from(JSON.stringify(session)).toString('base64');
+  const sig = createHmac('sha256', SECRET).update(payload).digest('hex');
+  return `${payload}.${sig}`;
 }

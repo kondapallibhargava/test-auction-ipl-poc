@@ -62,8 +62,8 @@ export interface Tournament {
   status: 'lobby' | 'active' | 'completed';
   teamBudget: number; // in millions (M), per team
   maxTeams: number;
-  teams: Map<string, Team>; // teamId -> Team
-  players: Map<string, TournamentPlayer>; // playerId -> TournamentPlayer
+  teams: Record<string, Team>; // teamId -> Team
+  players: Record<string, TournamentPlayer>; // playerId -> TournamentPlayer
   auctionState: AuctionState;
   createdAt: Date;
   closed?: boolean;

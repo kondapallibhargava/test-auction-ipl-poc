@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Quinton de Kock",
+    "role": "Wicket-Keeper",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Danish Malewar",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Robin Minz",
+    "role": "Wicket-Keeper",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Ryan Rickelton",
+    "role": "Wicket-Keeper",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Sherfane Rutherford",
+    "role": "Batsman",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Rohit Sharma",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Suryakumar Yadav",
+    "role": "Batsman",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Hardik Pandya",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Atharva Ankolekar",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Raj Bawa",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Corbin Bosch",
+    "role": "All-Rounder",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Will Jacks",
+    "role": "All-Rounder",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Mayank Rawat",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Naman Dhir",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Mitchell Santner",
+    "role": "All-Rounder",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Shardul Thakur",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Tilak Varma",
+    "role": "All-Rounder",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Ashwani Kumar",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Trent Boult",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Jasprit Bumrah",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Deepak Chahar",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "AM Ghazanfar",
+    "role": "Bowler",
+    "nationality": "Overseas",
+    "base_price": 200
+  },
+  {
+    "name": "Mayank Markande",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Mohd Izhar",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  },
+  {
+    "name": "Raghu Sharma",
+    "role": "Bowler",
+    "nationality": "Indian",
+    "base_price": 200
+  }
+]

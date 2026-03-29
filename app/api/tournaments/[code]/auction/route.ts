@@ -21,22 +21,22 @@ export async function POST(
     let state;
     switch (action) {
       case 'start':
-        state = startAuction(code, session.userId);
+        state = await startAuction(code, session.userId);
         break;
       case 'sold':
-        state = markSold(code, session.userId);
+        state = await markSold(code, session.userId);
         break;
       case 'unsold':
-        state = markUnsold(code, session.userId);
+        state = await markUnsold(code, session.userId);
         break;
       case 'reset':
-        state = resetAuction(code, session.userId);
+        state = await resetAuction(code, session.userId);
         break;
       case 'rerun':
-        state = rerunUnsoldAuction(code, session.userId);
+        state = await rerunUnsoldAuction(code, session.userId);
         break;
       case 'close':
-        state = closeAuction(code, session.userId);
+        state = await closeAuction(code, session.userId);
         break;
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { SEEDED_PLAYERS } from '@/lib/seed';
+import { getPlayers } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json(SEEDED_PLAYERS);
+  const players = await getPlayers();
+  return NextResponse.json(players);
 }

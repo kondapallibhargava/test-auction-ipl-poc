@@ -21,7 +21,7 @@ export async function POST(
       return NextResponse.json({ error: 'Valid bid amount required' }, { status: 400 });
     }
 
-    const bid = placeBid(code, session.userId, amount);
+    const bid = await placeBid(code, session.userId, amount);
     return NextResponse.json(bid, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Bid failed';

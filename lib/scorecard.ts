@@ -1,9 +1,8 @@
 import { Match } from './types';
-import crypto from 'crypto';
 
 export function getSampleScorecard(): Match {
   return {
-    id: crypto.randomUUID(),
+    id: 'sample-stars-vs-legends-ipl2024-m1',
     title: 'Stars XI vs Legends XI, IPL 2024, Match 1',
     date: '2024-04-07',
     venue: 'Wankhede Stadium, Mumbai',

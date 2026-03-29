@@ -15,6 +15,7 @@ export default function ScoringPanel({ code, isHost }: ScoringPanelProps) {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
+  const [jsonPaste, setJsonPaste] = useState('');
 
   const fetchResults = useCallback(async () => {
     try {
@@ -34,14 +35,14 @@ export default function ScoringPanel({ code, isHost }: ScoringPanelProps) {
     fetchResults();
   }, [fetchResults]);
 
-  async function handleImportSample() {
+  async function postImport(body: Record<string, unknown>) {
     setImporting(true);
     setError(null);
     try {
       const res = await fetch(`/api/tournaments/${code}/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: 'sample' }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -56,6 +57,22 @@ export default function ScoringPanel({ code, isHost }: ScoringPanelProps) {
     }
   }
 
+  async function handleImportSample() {
+    await postImport({ source: 'sample' });
+  }
+
+  async function handleImportJson() {
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonPaste);
+    } catch {
+      setError('Invalid JSON — paste a valid Match object');
+      return;
+    }
+    await postImport({ source: 'json', match: parsed });
+    if (!error) setJsonPaste('');
+  }
+
   return (
     <div className="mt-8 space-y-4">
       <h2 className="text-xl font-bold text-white">Fantasy Points Leaderboard</h2>
@@ -63,38 +80,47 @@ export default function ScoringPanel({ code, isHost }: ScoringPanelProps) {
       {isHost && (
         <Card bordered className="space-y-3">
           <h3 className="text-white font-semibold text-sm">Import Scorecard</h3>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleImportSample}
-              disabled={importing}
-              className="px-4 py-2 rounded text-sm font-medium transition"
-              style={{
-                backgroundColor: importing ? '#0a1e3d' : '#0c2d5e',
-                color: importing ? '#6b7280' : '#f7941d',
-                cursor: importing ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {importing ? 'Importing…' : 'Import Sample Scorecard'}
-            </button>
-            <div className="relative flex-1">
-              <input
-                type="text"
-                disabled
-                placeholder="ESPN Cricinfo URL — coming soon"
-                title="ESPN Cricinfo import is not yet implemented"
-                className="w-full px-3 py-2 rounded text-sm cursor-not-allowed"
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleImportSample}
+                disabled={importing}
+                className="px-4 py-2 rounded text-sm font-medium transition"
+                style={{
+                  backgroundColor: importing ? '#0a1e3d' : '#0c2d5e',
+                  color: importing ? '#6b7280' : '#f7941d',
+                  cursor: importing ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {importing ? 'Importing…' : 'Import Sample Scorecard'}
+              </button>
+            </div>
+            <div className="space-y-2">
+              <p className="text-gray-500 text-xs">Or paste match JSON directly:</p>
+              <textarea
+                value={jsonPaste}
+                onChange={e => setJsonPaste(e.target.value)}
+                placeholder={`{"id":"match-id","title":"Team A vs Team B","date":"2025-04-01","performances":[...]}`}
+                rows={4}
+                className="w-full px-3 py-2 rounded text-xs font-mono resize-y"
                 style={{
                   backgroundColor: '#080f1e',
-                  color: '#4b5563',
+                  color: '#9ca3af',
                   border: '1px solid #1a3d6b',
                 }}
               />
-              <span
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600"
-                title="Coming soon"
+              <button
+                onClick={handleImportJson}
+                disabled={importing || !jsonPaste.trim()}
+                className="px-4 py-2 rounded text-sm font-medium transition"
+                style={{
+                  backgroundColor: importing || !jsonPaste.trim() ? '#0a1e3d' : '#0c2d5e',
+                  color: importing || !jsonPaste.trim() ? '#6b7280' : '#f7941d',
+                  cursor: importing || !jsonPaste.trim() ? 'not-allowed' : 'pointer',
+                }}
               >
-                🔒
-              </span>
+                {importing ? 'Importing…' : 'Import Match JSON'}
+              </button>
             </div>
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}

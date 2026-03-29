@@ -16,7 +16,7 @@ export async function DELETE(
   const { code } = await params;
 
   try {
-    leaveTournament(session.userId, code);
+    await leaveTournament(session.userId, code);
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to leave tournament';
