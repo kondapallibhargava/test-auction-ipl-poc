@@ -247,7 +247,7 @@ export async function createTournament(
     auctionLog: [],
   };
 
-  await db.from('tournaments').insert({
+  const { error: tErr } = await db.from('tournaments').insert({
     code,
     tournament_id: tournamentId,
     name,
@@ -259,9 +259,10 @@ export async function createTournament(
     auction_state: auctionState,
     match_results: [],
   });
+  if (tErr) throw new Error(`DB insert failed (tournaments): ${tErr.message}`);
 
   const teamId = generateId();
-  await db.from('teams').insert({
+  const { error: teamErr } = await db.from('teams').insert({
     team_id: teamId,
     tournament_code: code,
     owner_id: userId,
@@ -269,10 +270,13 @@ export async function createTournament(
     initial_budget: teamBudget,
     budget: teamBudget,
   });
+  if (teamErr) throw new Error(`DB insert failed (teams): ${teamErr.message}`);
 
   await db.from('users').update({ active_tournament_code: code }).eq('user_id', userId);
 
-  return (await loadTournament(code))!;
+  const tournament = await loadTournament(code);
+  if (!tournament) throw new Error('Tournament created but could not be loaded — check DB permissions');
+  return tournament;
 }
 
 export async function joinTournament(userId: string, code: string, teamName: string): Promise<Team> {
