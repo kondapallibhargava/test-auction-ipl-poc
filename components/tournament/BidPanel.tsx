@@ -98,7 +98,7 @@ export default function BidPanel({ code, auctionState, myTeam, userId, onBidPlac
               placeholder={`Min $${minBid}K`}
               min={minBid}
               max={budgetInThousands}
-              className="flex-1 px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white text-sm focus:outline-none focus:border-[#f7941d]"
+              className="flex-1 px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white text-sm focus:outline-none focus:border-[#f7941d]"
             />
             <Button
               variant="primary"

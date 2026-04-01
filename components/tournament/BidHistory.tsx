@@ -15,7 +15,7 @@ export default function BidHistory({ bids, userId }: { bids: Bid[]; userId: stri
             <div
               key={bid.id}
               className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
-                bid.userId === userId ? 'bg-[#0c2d5e]/50' : 'bg-white/5'
+                bid.userId === userId ? 'bg-[#383838]/50' : 'bg-white/5'
               } ${i === 0 ? 'border border-[#f7941d]/30' : ''}`}
             >
               <span className={bid.userId === userId ? 'text-[#f7941d]' : 'text-gray-300'}>

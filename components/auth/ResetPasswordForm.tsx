@@ -61,7 +61,7 @@ export default function ResetPasswordForm() {
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
           placeholder="At least 4 characters"
           required
         />
@@ -72,7 +72,7 @@ export default function ResetPasswordForm() {
           type="password"
           value={confirm}
           onChange={e => setConfirm(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
           placeholder="Same password again"
           required
         />

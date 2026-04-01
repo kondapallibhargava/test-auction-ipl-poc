@@ -2,7 +2,7 @@ import { AuctionStatus } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
 
 const STATUS_CONFIG: Record<AuctionStatus, { label: string; variant: 'gold' | 'green' | 'red' | 'orange' | 'gray' | 'blue'; bg: string }> = {
-  lobby:     { label: 'Waiting in Lobby',  variant: 'gold',   bg: '#0a1e3d' },
+  lobby:     { label: 'Waiting in Lobby',  variant: 'gold',   bg: '#1c1c1c' },
   player_up: { label: 'BIDDING OPEN',      variant: 'green',  bg: '#0a2018' },
   sold:      { label: 'SOLD!',             variant: 'orange', bg: '#2a1400' },
   unsold:    { label: 'UNSOLD',            variant: 'red',    bg: '#2a0a0a' },

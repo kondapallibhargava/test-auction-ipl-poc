@@ -39,7 +39,7 @@ export default function JoinTournamentForm() {
           type="text"
           value={code}
           onChange={e => setCode(e.target.value.toUpperCase())}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm font-mono tracking-widest"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm font-mono tracking-widest"
           placeholder="IPL-XXXX"
           maxLength={8}
           required
@@ -51,7 +51,7 @@ export default function JoinTournamentForm() {
           type="text"
           value={teamName}
           onChange={e => setTeamName(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
           placeholder="e.g. Mumbai Indians"
           required
         />

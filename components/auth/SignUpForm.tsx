@@ -40,7 +40,7 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
           type="text"
           value={username}
           onChange={e => setUsername(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
           placeholder="3–20 characters"
           required
         />
@@ -51,7 +51,7 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
           placeholder="you@example.com"
         />
       </div>
@@ -61,7 +61,7 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
           placeholder="At least 4 characters"
           required
         />

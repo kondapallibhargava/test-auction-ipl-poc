@@ -40,7 +40,7 @@ export default function CreateTournamentForm() {
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
+          className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
           placeholder="e.g. IPL 2025"
           required
         />
@@ -53,7 +53,7 @@ export default function CreateTournamentForm() {
             value={teamBudget}
             onChange={e => setTeamBudget(e.target.value)}
             min="50" max="1000"
-            className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
+            className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
             required
           />
         </div>
@@ -64,7 +64,7 @@ export default function CreateTournamentForm() {
             value={maxTeams}
             onChange={e => setMaxTeams(e.target.value)}
             min="2" max="20"
-            className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
+            className="w-full px-3 py-2 rounded-md bg-[#181818] border border-white/20 text-white focus:outline-none focus:border-[#f7941d] text-sm"
             required
           />
         </div>

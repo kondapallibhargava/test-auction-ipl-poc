@@ -35,7 +35,7 @@ export default async function DashboardPage() {
         {activeTournament && (
           <div
             className="rounded-xl p-4 mb-6 border border-[#f7941d]/30 flex items-center justify-between"
-            style={{ backgroundColor: '#0d1f38' }}
+            style={{ backgroundColor: '#252525' }}
           >
             <div>
               <p className="text-[#f7941d] text-sm font-medium mb-0.5">Active Tournament</p>
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
             </div>
             <a
               href={`/tournament/${activeTournament.code}`}
-              className="px-4 py-2 rounded-md text-[#060d1a] font-bold text-sm"
+              className="px-4 py-2 rounded-md text-[#181818] font-bold text-sm"
               style={{ backgroundColor: '#f7941d' }}
             >
               Enter Room
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
                   <li>Share the code (e.g. <span className="font-mono">IPL-4X9K</span>) with friends</li>
                   <li>Start the auction once everyone has joined</li>
                   <li>For each player: wait for bids → click Sold or Unsold</li>
-                  <li>After the auction: import match scorecards to update the leaderboard</li>
+                  <li>After the auction: the admin imports match scorecards to update the leaderboard</li>
                 </ol>
               </div>
               <div>

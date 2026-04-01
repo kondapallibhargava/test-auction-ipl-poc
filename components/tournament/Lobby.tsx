@@ -19,7 +19,7 @@ export default function Lobby({ teams, myTeamId, isHost }: LobbyProps) {
           <div
             key={team.id}
             className={`flex items-center justify-between px-3 py-2 rounded-md ${
-              team.id === myTeamId ? 'border border-[#f7941d]/30 bg-[#0c2d5e]/30' : 'bg-white/5'
+              team.id === myTeamId ? 'border border-[#f7941d]/30 bg-[#383838]/30' : 'bg-white/5'
             }`}
           >
             <span className={team.id === myTeamId ? 'text-[#f7941d]' : 'text-white'}>

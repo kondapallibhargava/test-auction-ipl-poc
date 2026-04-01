@@ -23,7 +23,7 @@ export default function TournamentCard({ tournament, currentUserId }: Tournament
     <Link href={`/tournament/${tournament.code}`}>
       <div
         className="rounded-xl p-4 border border-white/10 hover:border-[#f7941d]/40 transition-all cursor-pointer"
-        style={{ backgroundColor: '#0d1f38' }}
+        style={{ backgroundColor: '#252525' }}
       >
         <div className="flex items-start justify-between mb-2">
           <div>

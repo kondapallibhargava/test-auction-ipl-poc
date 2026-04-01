@@ -120,7 +120,7 @@ export default function TournamentRoom({
               <p className="text-gray-400 text-sm mb-2">Share this code to invite others:</p>
               <div
                 className="flex items-center justify-between px-4 py-3 rounded-md"
-                style={{ backgroundColor: '#0c2d5e' }}
+                style={{ backgroundColor: '#383838' }}
               >
                 <span className="text-[#f7941d] font-mono text-xl font-bold tracking-widest">{code}</span>
                 <button
@@ -186,7 +186,7 @@ export default function TournamentRoom({
                 onClick={() => handleAuctionAction('rerun')}
                 className="px-4 py-2 rounded text-sm font-medium transition"
                 style={{
-                  backgroundColor: unsoldPlayers.length === 0 ? '#0a1e3d' : '#0c2d5e',
+                  backgroundColor: unsoldPlayers.length === 0 ? '#1c1c1c' : '#383838',
                   color: unsoldPlayers.length === 0 ? '#4b5563' : '#f7941d',
                   cursor: unsoldPlayers.length === 0 ? 'not-allowed' : 'pointer',
                 }}

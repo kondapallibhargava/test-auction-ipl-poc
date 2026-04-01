@@ -21,7 +21,7 @@ export default function Header({ username }: HeaderProps) {
   return (
     <header
       style={{
-        background: 'linear-gradient(135deg, #0c1f3d 0%, #0c2d5e 100%)',
+        background: 'linear-gradient(135deg, #1e1e1e 0%, #383838 100%)',
         borderBottom: '3px solid #f7941d',
       }}
       className="sticky top-0 z-50"
@@ -51,7 +51,7 @@ export default function Header({ username }: HeaderProps) {
             <button
               onClick={handleLogout}
               disabled={loading}
-              style={{ backgroundColor: '#f7941d', color: '#060d1a' }}
+              style={{ backgroundColor: '#f7941d', color: '#181818' }}
               className="px-3 py-1 rounded text-sm font-bold hover:opacity-90 disabled:opacity-50 transition"
             >
               {loading ? '...' : 'Logout'}

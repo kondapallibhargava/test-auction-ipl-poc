@@ -65,6 +65,32 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      {/* How to use */}
+      <div className="mt-10 w-full max-w-2xl rounded-xl p-5 border border-[#f7941d]/20" style={{ backgroundColor: '#252525' }}>
+        <h2 className="text-white font-semibold mb-4">How to use</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-[#f7941d] font-semibold mb-3">As Host</h3>
+            <ol className="list-decimal list-inside space-y-2 text-gray-400 text-sm">
+              <li>Create a tournament (set budget + max teams)</li>
+              <li>Share the code (e.g. <span className="font-mono">IPL-4X9K</span>) with friends</li>
+              <li>Start the auction once everyone has joined</li>
+              <li>For each player: wait for bids → click Sold or Unsold</li>
+              <li>After the auction: the admin imports match scorecards to update the leaderboard</li>
+            </ol>
+          </div>
+          <div>
+            <h3 className="text-[#f7941d] font-semibold mb-3">As Participant</h3>
+            <ol className="list-decimal list-inside space-y-2 text-gray-400 text-sm">
+              <li>Get the tournament code from the host</li>
+              <li>Join with the code + pick a team name</li>
+              <li>Bid on players within your budget during the auction</li>
+              <li>Track your squad and fantasy points in the leaderboard</li>
+            </ol>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

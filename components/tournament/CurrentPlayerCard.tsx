@@ -23,7 +23,7 @@ export default function CurrentPlayerCard({ player }: { player: TournamentPlayer
       <div className="text-center">
         <div
           className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl"
-          style={{ backgroundColor: '#0c2d5e', border: '3px solid #f7941d' }}
+          style={{ backgroundColor: '#383838', border: '3px solid #f7941d' }}
         >
           🏏
         </div>

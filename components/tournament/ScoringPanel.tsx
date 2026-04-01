@@ -87,7 +87,7 @@ export default function ScoringPanel({ code, isHost }: ScoringPanelProps) {
                 disabled={importing}
                 className="px-4 py-2 rounded text-sm font-medium transition"
                 style={{
-                  backgroundColor: importing ? '#0a1e3d' : '#0c2d5e',
+                  backgroundColor: importing ? '#1c1c1c' : '#383838',
                   color: importing ? '#6b7280' : '#f7941d',
                   cursor: importing ? 'not-allowed' : 'pointer',
                 }}
@@ -114,7 +114,7 @@ export default function ScoringPanel({ code, isHost }: ScoringPanelProps) {
                 disabled={importing || !jsonPaste.trim()}
                 className="px-4 py-2 rounded text-sm font-medium transition"
                 style={{
-                  backgroundColor: importing || !jsonPaste.trim() ? '#0a1e3d' : '#0c2d5e',
+                  backgroundColor: importing || !jsonPaste.trim() ? '#1c1c1c' : '#383838',
                   color: importing || !jsonPaste.trim() ? '#6b7280' : '#f7941d',
                   cursor: importing || !jsonPaste.trim() ? 'not-allowed' : 'pointer',
                 }}

@@ -20,7 +20,7 @@ export default function TeamBudgetTable({ teams, myTeamId }: TeamBudgetTableProp
             <div
               key={team.id}
               className={`p-3 rounded-md ${team.id === myTeamId ? 'border border-[#f7941d]/40' : 'border border-white/10'}`}
-              style={{ backgroundColor: '#060d1a' }}
+              style={{ backgroundColor: '#181818' }}
             >
               <div className="flex items-center justify-between mb-1">
                 <div>

@@ -127,7 +127,7 @@ export default function AdminDashboard({ tournaments }: { tournaments: Serialize
                   placeholder="RCB vs SRH, IPL 2026, Match 1"
                   value={form.matchTitle}
                   onChange={e => handleTitleChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md text-sm text-white bg-[#060d1a] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
+                  className="w-full px-3 py-2 rounded-md text-sm text-white bg-[#181818] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
                 />
               </div>
               <div>
@@ -136,7 +136,7 @@ export default function AdminDashboard({ tournaments }: { tournaments: Serialize
                   type="date"
                   value={form.matchDate}
                   onChange={e => setForm(f => ({ ...f, matchDate: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-md text-sm text-white bg-[#060d1a] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
+                  className="w-full px-3 py-2 rounded-md text-sm text-white bg-[#181818] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
                 />
               </div>
               <div>
@@ -146,7 +146,7 @@ export default function AdminDashboard({ tournaments }: { tournaments: Serialize
                   placeholder="Chinnaswamy Stadium, Bengaluru"
                   value={form.venue}
                   onChange={e => setForm(f => ({ ...f, venue: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-md text-sm text-white bg-[#060d1a] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
+                  className="w-full px-3 py-2 rounded-md text-sm text-white bg-[#181818] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
                 />
               </div>
               <div>
@@ -156,7 +156,7 @@ export default function AdminDashboard({ tournaments }: { tournaments: Serialize
                   placeholder="auto-generated from title"
                   value={form.matchId}
                   onChange={e => setForm(f => ({ ...f, matchId: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-md text-sm text-white font-mono bg-[#060d1a] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
+                  className="w-full px-3 py-2 rounded-md text-sm text-white font-mono bg-[#181818] border border-white/10 focus:outline-none focus:border-[#f7941d]/50"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Used for deduplication — edit if re-uploading a correction</p>
               </div>
@@ -171,7 +171,7 @@ export default function AdminDashboard({ tournaments }: { tournaments: Serialize
                 placeholder={"Sunrisers Hyderabad  (20 ovs maximum)\nBatting\tR\tB\t4s\t6s\tSR\nTravis Head \n11\t9\t2\t0\t122.22\nc Salt b Duffy\n..."}
                 value={form.scorecardText}
                 onChange={e => setForm(f => ({ ...f, scorecardText: e.target.value }))}
-                className="w-full px-3 py-2 rounded-md text-xs text-white font-mono bg-[#060d1a] border border-white/10 focus:outline-none focus:border-[#f7941d]/50 resize-y"
+                className="w-full px-3 py-2 rounded-md text-xs text-white font-mono bg-[#181818] border border-white/10 focus:outline-none focus:border-[#f7941d]/50 resize-y"
               />
             </div>
 
@@ -201,7 +201,7 @@ export default function AdminDashboard({ tournaments }: { tournaments: Serialize
             <button
               onClick={handleSubmit}
               disabled={loading || ongoing.length === 0}
-              className="px-4 py-2 rounded-md text-sm font-medium text-[#060d1a] disabled:opacity-50"
+              className="px-4 py-2 rounded-md text-sm font-medium text-[#181818] disabled:opacity-50"
               style={{ backgroundColor: '#f7941d' }}
             >
               {loading ? 'Importing…' : `Import to ${ongoing.length} Tournament${ongoing.length !== 1 ? 's' : ''}`}
