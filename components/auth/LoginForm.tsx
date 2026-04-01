@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Button from '@/components/ui/Button';
 
 export default function LoginForm({ onSwitch }: { onSwitch: () => void }) {
@@ -45,7 +46,12 @@ export default function LoginForm({ onSwitch }: { onSwitch: () => void }) {
         />
       </div>
       <div>
-        <label className="block text-sm text-gray-300 mb-1">Password</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm text-gray-300">Password</label>
+          <Link href="/forgot-password" className="text-xs text-[#f7941d] hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <input
           type="password"
           value={password}

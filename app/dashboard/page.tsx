@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import { listTournaments, getUserById, serializeTournament } from '@/lib/store';
+import { listTournamentsForUser, getUserById, serializeTournament } from '@/lib/store';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import TournamentCard from '@/components/dashboard/TournamentCard';
@@ -19,17 +19,10 @@ export default async function DashboardPage() {
   const user = await getUserById(session.userId);
   if (!user) redirect('/');
 
-  const allTournaments = (await listTournaments()).map(serializeTournament);
+  const myTournaments = (await listTournamentsForUser(session.userId)).map(serializeTournament);
   const activeTournament = user.activeTournamentCode
-    ? allTournaments.find(t => t.code === user.activeTournamentCode)
+    ? myTournaments.find(t => t.code === user.activeTournamentCode)
     : null;
-
-  const openTournaments = allTournaments.filter(
-    t => t.status === 'lobby' && t.code !== user.activeTournamentCode
-  );
-  const myTournaments = allTournaments.filter(t =>
-    Object.values(t.teams as Record<string, Team>).some(team => team.userId === session.userId)
-  );
 
   return (
     <div className="min-h-screen">
@@ -89,20 +82,33 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {!activeTournament && openTournaments.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-white font-semibold mb-4">Open Tournaments</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {openTournaments.map(t => (
-                <TournamentCard
-                  key={t.code}
-                  tournament={{ ...t, teams: t.teams as Record<string, unknown> }}
-                  currentUserId={session.userId}
-                />
-              ))}
+        {/* How to use — always visible */}
+        <div className="mt-8">
+          <Card bordered>
+            <h2 className="text-white font-semibold mb-4">How to use</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-[#f7941d] font-semibold mb-3">As Host</h3>
+                <ol className="list-decimal list-inside space-y-2 text-gray-400 text-sm">
+                  <li>Create a tournament (set budget + max teams)</li>
+                  <li>Share the code (e.g. <span className="font-mono">IPL-4X9K</span>) with friends</li>
+                  <li>Start the auction once everyone has joined</li>
+                  <li>For each player: wait for bids → click Sold or Unsold</li>
+                  <li>After the auction: import match scorecards to update the leaderboard</li>
+                </ol>
+              </div>
+              <div>
+                <h3 className="text-[#f7941d] font-semibold mb-3">As Participant</h3>
+                <ol className="list-decimal list-inside space-y-2 text-gray-400 text-sm">
+                  <li>Get the tournament code from the host</li>
+                  <li>Join with the code + pick a team name</li>
+                  <li>Bid on players within your budget during the auction</li>
+                  <li>Track your squad and fantasy points in the leaderboard</li>
+                </ol>
+              </div>
             </div>
-          </div>
-        )}
+          </Card>
+        </div>
       </div>
     </div>
   );

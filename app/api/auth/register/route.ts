@@ -3,7 +3,7 @@ import { register, createSessionCookie } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const { username, password, email } = await req.json();
     if (!username || !password) {
       return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
     }
@@ -13,8 +13,11 @@ export async function POST(req: NextRequest) {
     if (password.length < 4) {
       return NextResponse.json({ error: 'Password must be at least 4 characters' }, { status: 400 });
     }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+    }
 
-    const user = await register(username.trim(), password);
+    const user = await register(username.trim(), password, email?.trim().toLowerCase());
     const cookieValue = createSessionCookie(user);
 
     const res = NextResponse.json({ userId: user.id, username: user.username }, { status: 201 });
@@ -26,7 +29,11 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Registration failed';
+    const raw = err instanceof Error ? err.message : 'Registration failed';
+    // Translate Postgres unique-constraint errors into friendly messages
+    const message = raw.includes('users_email_idx') || raw.toLowerCase().includes('email')
+      ? 'An account with that email already exists'
+      : raw;
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

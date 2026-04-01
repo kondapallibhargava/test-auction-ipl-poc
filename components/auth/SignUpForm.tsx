@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
   const router = useRouter();
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, email: email || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -42,6 +43,16 @@ export default function SignUpForm({ onSwitch }: { onSwitch: () => void }) {
           className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
           placeholder="3–20 characters"
           required
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-gray-300 mb-1">Email <span className="text-gray-500">(for password recovery)</span></label>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          className="w-full px-3 py-2 rounded-md bg-[#060d1a] border border-white/20 text-white focus:outline-none focus:border-[#f7941d]"
+          placeholder="you@example.com"
         />
       </div>
       <div>

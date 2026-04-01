@@ -1,7 +1,8 @@
 export interface User {
   id: string;
   username: string;
-  passwordHash: string; // plaintext for POC
+  passwordHash: string;
+  email?: string;
   createdAt: Date;
   activeTournamentCode?: string;
 }

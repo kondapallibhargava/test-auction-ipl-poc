@@ -147,26 +147,29 @@ async function saveAuctionState(
 
 // ── Auth helpers ──────────────────────────────────────────────────────────
 
-export async function registerUser(username: string, passwordHash: string): Promise<User> {
+export async function registerUser(username: string, passwordHash: string, email?: string): Promise<User> {
+  const normalizedUsername = username.toLowerCase();
   const { data: existing } = await db
     .from('users')
     .select('user_id')
-    .eq('username', username.toLowerCase())
+    .eq('username', normalizedUsername)
     .single();
   if (existing) throw new Error('Username already taken');
 
   const userId = generateId();
   const { error } = await db.from('users').insert({
     user_id: userId,
-    username,
+    username: normalizedUsername,
     password_hash: passwordHash,
+    email: email ?? null,
   });
   if (error) throw new Error(error.message);
 
   return {
     id: userId,
-    username,
+    username: normalizedUsername,
     passwordHash,
+    email,
     createdAt: new Date(),
   };
 }
@@ -182,9 +185,64 @@ export async function getUserByUsername(username: string): Promise<User | null> 
     id: data.user_id,
     username: data.username,
     passwordHash: data.password_hash,
+    email: data.email ?? undefined,
     createdAt: new Date(data.created_at),
     activeTournamentCode: data.active_tournament_code ?? undefined,
   };
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const { data } = await db
+    .from('users')
+    .select('*')
+    .eq('email', email.toLowerCase())
+    .single();
+  if (!data) return null;
+  return {
+    id: data.user_id,
+    username: data.username,
+    passwordHash: data.password_hash,
+    email: data.email ?? undefined,
+    createdAt: new Date(data.created_at),
+    activeTournamentCode: data.active_tournament_code ?? undefined,
+  };
+}
+
+export async function updateUserPassword(userId: string, passwordHash: string): Promise<void> {
+  const { error } = await db
+    .from('users')
+    .update({ password_hash: passwordHash })
+    .eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}
+
+export async function createPasswordResetToken(userId: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const { error } = await db.from('password_reset_tokens').insert({
+    token,
+    user_id: userId,
+    expires_at: expiresAt.toISOString(),
+  });
+  if (error) throw new Error(error.message);
+  return token;
+}
+
+export async function consumePasswordResetToken(token: string): Promise<string | null> {
+  const { data } = await db
+    .from('password_reset_tokens')
+    .select('*')
+    .eq('token', token)
+    .eq('used', false)
+    .single();
+  if (!data) return null;
+  if (new Date(data.expires_at) < new Date()) return null;
+  const { error } = await db
+    .from('password_reset_tokens')
+    .update({ used: true })
+    .eq('token', token);
+  if (error) throw new Error(error.message);
+  return data.user_id as string;
 }
 
 export async function getUserById(userId: string): Promise<User | undefined> {
@@ -343,6 +401,19 @@ export async function listTournaments(): Promise<Tournament[]> {
 
   const tournaments = await Promise.all(
     data.map((row: { code: string }) => loadTournament(row.code))
+  );
+  return tournaments.filter((t): t is Tournament => t !== null);
+}
+
+export async function listTournamentsForUser(userId: string): Promise<Tournament[]> {
+  const { data } = await db
+    .from('teams')
+    .select('tournament_code')
+    .eq('owner_id', userId);
+  if (!data || data.length === 0) return [];
+
+  const tournaments = await Promise.all(
+    data.map((row: { tournament_code: string }) => loadTournament(row.tournament_code))
   );
   return tournaments.filter((t): t is Tournament => t !== null);
 }
@@ -564,6 +635,54 @@ export async function importMatch(
       teamPerformances.get(teamId)!.push(perf);
     } else {
       unownedScores.push(calculatePlayerPoints(perf));
+    }
+  }
+
+  const teamScores = Object.values(tournament.teams).map(team => {
+    const perfs = teamPerformances.get(team.id) ?? [];
+    return calculateTeamScore(team, perfs);
+  });
+  teamScores.sort((a, b) => b.totalPoints - a.totalPoints);
+
+  const result: TournamentMatchResult = {
+    match,
+    teamScores,
+    importedAt: new Date().toISOString(),
+  };
+
+  const matchResults = [...(tournament.matchResults ?? []), result];
+  await saveAuctionState(code, tournament.auctionState, undefined, undefined, matchResults);
+
+  return result;
+}
+
+export async function adminImportMatch(
+  code: string,
+  match: Match
+): Promise<TournamentMatchResult> {
+  const tournament = await loadTournament(code);
+  if (!tournament) throw new Error('Tournament not found');
+  if (tournament.status !== 'completed') throw new Error('Tournament must be completed first');
+  if ((tournament.matchResults ?? []).some(r => r.match.id === match.id)) {
+    throw new Error('This match has already been imported');
+  }
+
+  const playerTeamMap = new Map<string, string>();
+  for (const team of Object.values(tournament.teams)) {
+    for (const p of team.players) {
+      playerTeamMap.set(p.name.toLowerCase(), team.id);
+    }
+  }
+
+  const teamPerformances = new Map<string, typeof match.performances>();
+  for (const team of Object.values(tournament.teams)) {
+    teamPerformances.set(team.id, []);
+  }
+
+  for (const perf of match.performances) {
+    const teamId = playerTeamMap.get(perf.playerName.toLowerCase());
+    if (teamId) {
+      teamPerformances.get(teamId)!.push(perf);
     }
   }
 
