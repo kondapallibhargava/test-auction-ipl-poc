@@ -8,9 +8,9 @@ import {
 
 const SECRET = process.env.SESSION_SECRET ?? 'dev-only-insecure-secret';
 
-export async function register(username: string, password: string, email?: string): Promise<User> {
+export async function register(username: string, password: string, email?: string, ip?: string): Promise<User> {
   const hash = await bcrypt.hash(password, 10);
-  return registerUser(username, hash, email);
+  return registerUser(username, hash, email, ip);
 }
 
 export async function login(username: string, password: string): Promise<User | null> {

@@ -147,7 +147,7 @@ async function saveAuctionState(
 
 // ── Auth helpers ──────────────────────────────────────────────────────────
 
-export async function registerUser(username: string, passwordHash: string, email?: string): Promise<User> {
+export async function registerUser(username: string, passwordHash: string, email?: string, ip?: string): Promise<User> {
   const normalizedUsername = username.toLowerCase();
   const { data: existing } = await db
     .from('users')
@@ -156,12 +156,26 @@ export async function registerUser(username: string, passwordHash: string, email
     .single();
   if (existing) throw new Error('Username already taken');
 
+  // Rate limit: max 3 registrations per IP per hour
+  if (ip) {
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count } = await db
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('registered_ip', ip)
+      .gte('created_at', since);
+    if ((count ?? 0) >= 3) {
+      throw new Error('Too many accounts created from this IP. Try again later.');
+    }
+  }
+
   const userId = generateId();
   const { error } = await db.from('users').insert({
     user_id: userId,
     username: normalizedUsername,
     password_hash: passwordHash,
     email: email ?? null,
+    registered_ip: ip ?? null,
   });
   if (error) throw new Error(error.message);
 

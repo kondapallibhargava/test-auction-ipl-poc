@@ -17,7 +17,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    const user = await register(username.trim(), password, email?.trim().toLowerCase());
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+            ?? req.headers.get('x-real-ip')
+            ?? undefined;
+    const user = await register(username.trim(), password, email?.trim().toLowerCase(), ip);
     const cookieValue = createSessionCookie(user);
 
     const res = NextResponse.json({ userId: user.id, username: user.username }, { status: 201 });
