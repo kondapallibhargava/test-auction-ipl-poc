@@ -23,3 +23,5 @@ npm run dev
 ```
 
 Copy `.env.example` to `.env.local` and fill in your Supabase and session secret values.
+
+Thanks to Claude
