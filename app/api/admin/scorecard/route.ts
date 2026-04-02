@@ -5,17 +5,12 @@ import { parseESPNScorecardText } from '@/lib/espn-parser';
 
 export const dynamic = 'force-dynamic';
 
-function isAdmin(username: string): boolean {
-  const adminUsername = process.env.ADMIN_USERNAME;
-  return !!adminUsername && username === adminUsername;
-}
-
 export async function POST(req: NextRequest) {
   const session = getSession(req.cookies.get('ipl-session')?.value);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (!isAdmin(session.username)) {
+  if (!session.isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

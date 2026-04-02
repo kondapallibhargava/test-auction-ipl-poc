@@ -40,7 +40,7 @@ export function getSession(cookieValue: string | undefined): Session | null {
 }
 
 export function createSessionCookie(user: User): string {
-  const session: Session = { userId: user.id, username: user.username };
+  const session: Session = { userId: user.id, username: user.username, isAdmin: user.isAdmin };
   const payload = Buffer.from(JSON.stringify(session)).toString('base64');
   const sig = createHmac('sha256', SECRET).update(payload).digest('hex');
   return `${payload}.${sig}`;

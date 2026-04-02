@@ -7,17 +7,12 @@ import AdminDashboard from '@/components/admin/AdminDashboard';
 
 export const dynamic = 'force-dynamic';
 
-function isAdmin(username: string): boolean {
-  const adminUsername = process.env.ADMIN_USERNAME;
-  return !!adminUsername && username === adminUsername;
-}
-
 export default async function AdminPage() {
   const cookieStore = await cookies();
   const session = getSession(cookieStore.get('ipl-session')?.value);
 
   if (!session) redirect('/');
-  if (!isAdmin(session.username)) redirect('/dashboard');
+  if (!session.isAdmin) redirect('/dashboard');
 
   const tournaments = (await listTournaments()).map(serializeTournament);
 

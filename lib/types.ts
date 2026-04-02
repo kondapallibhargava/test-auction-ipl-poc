@@ -5,6 +5,7 @@ export interface User {
   email?: string;
   createdAt: Date;
   activeTournamentCode?: string;
+  isAdmin: boolean;
 }
 
 export interface Player {
@@ -136,6 +137,7 @@ export interface TournamentMatchResult {
 export interface Session {
   userId: string;
   username: string;
+  isAdmin: boolean;
 }
 
 export interface TournamentEvent {

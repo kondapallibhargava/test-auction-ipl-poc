@@ -185,6 +185,7 @@ export async function registerUser(username: string, passwordHash: string, email
     passwordHash,
     email,
     createdAt: new Date(),
+    isAdmin: false,
   };
 }
 
@@ -202,6 +203,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
     email: data.email ?? undefined,
     createdAt: new Date(data.created_at),
     activeTournamentCode: data.active_tournament_code ?? undefined,
+    isAdmin: data.is_admin ?? false,
   };
 }
 
@@ -219,6 +221,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     email: data.email ?? undefined,
     createdAt: new Date(data.created_at),
     activeTournamentCode: data.active_tournament_code ?? undefined,
+    isAdmin: data.is_admin ?? false,
   };
 }
 
@@ -272,6 +275,7 @@ export async function getUserById(userId: string): Promise<User | undefined> {
     passwordHash: data.password_hash,
     createdAt: new Date(data.created_at),
     activeTournamentCode: data.active_tournament_code ?? undefined,
+    isAdmin: data.is_admin ?? false,
   };
 }
 
